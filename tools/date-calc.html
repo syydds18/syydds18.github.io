@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>日期与工期计算器</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+:root{
+  --bg:#FAF9F5;--surface:#FFFFFF;--ink:#20201C;--muted:#6D6B63;--line:#E6E3DA;
+  --accent:#C2452D;--accent-ink:#FFFFFF;--accent-soft:#F5E8E3;--row-hover:#F2EFE8;
+  --radius:8px;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#141416;--surface:#1D1D20;--ink:#EDEBE4;--muted:#9A968C;--line:#2C2C31;
+    --accent:#E4705A;--accent-ink:#1A1210;--accent-soft:#38221D;--row-hover:#232327;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141416;--surface:#1D1D20;--ink:#EDEBE4;--muted:#9A968C;--line:#2C2C31;
+  --accent:#E4705A;--accent-ink:#1A1210;--accent-soft:#38221D;--row-hover:#232327;
+}
+html{background:var(--bg);color:var(--ink)}
+body{font-family:system-ui,-apple-system,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif;
+  line-height:1.75;-webkit-font-smoothing:antialiased;font-size:16px}
+a{color:inherit}
+.wrap{max-width:860px;margin:0 auto;padding:0 24px}
+.topbar{border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:10}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;height:60px;gap:16px}
+.brand{font-weight:700;font-size:15.5px;text-decoration:none;white-space:nowrap}
+.btn,.input,select{height:36px;border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--surface);color:var(--ink);font:inherit;font-size:14.5px;padding:0 14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;
+  transition:background .15s ease,border-color .15s ease}
+.btn:hover{background:var(--row-hover);border-color:var(--muted)}
+.btn:focus-visible,.input:focus-visible,select:focus-visible,a:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px}
+.btn-mini{height:32px;font-size:13px;padding:0 10px}
+.page-title{font-size:clamp(26px,4vw,34px);font-weight:800;margin:40px 0 6px}
+.page-sub{color:var(--muted);font-size:15px;margin-bottom:28px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.tab{height:34px;padding:0 16px;border:1px solid var(--line);border-radius:20px;background:var(--surface);
+  color:var(--ink);font-size:14px;cursor:pointer;transition:all .15s ease}
+.tab:hover{border-color:var(--accent);color:var(--accent)}
+.tab.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.panel{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:24px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-size:13px;color:var(--muted)}
+.field .input,.field select{width:100%}
+.result{margin-top:20px;padding-top:18px;border-top:1px dashed var(--line)}
+.result .k{font-size:12.5px;color:var(--muted);letter-spacing:.06em}
+.result .v{font-family:var(--mono);font-size:26px;font-weight:700;line-height:1.45}
+.result .v small{font-size:14px;color:var(--muted);font-weight:400;margin-left:6px}
+.sub{font-family:var(--mono);font-size:13.5px;color:var(--muted);margin-top:6px}
+.row-inline{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+.row-inline .field{flex:1;min-width:180px}
+.footer{border-top:1px solid var(--line);padding:24px 24px 36px;color:var(--muted);font-size:13px}
+@media (max-width:640px){.grid{grid-template-columns:1fr}}
+</style>
+<script>(function(){try{var t=localStorage.getItem('site_theme_v1');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+</head>
+<body>
+<header class="topbar"><div class="wrap topbar-inner">
+  <a class="brand" href="../index.html">← 返回主页</a>
+  <button class="btn btn-mini" data-theme-label onclick="cycleTheme()">主题:自动</button>
+</div></header>
+
+<main class="wrap">
+  <h1 class="page-title">日期与工期</h1>
+  <p class="page-sub">日期差、日期加减、时间戳互转</p>
+
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-panel="p-diff">日期差</button>
+    <button class="tab" data-panel="p-shift">日期加减</button>
+    <button class="tab" data-panel="p-ts">时间戳</button>
+  </div>
+
+  <div class="panel" id="p-diff">
+    <div class="grid">
+      <div class="field"><label>开始日期</label><input class="input" id="d1" type="date"></div>
+      <div class="field"><label>结束日期</label><input class="input" id="d2" type="date"></div>
+    </div>
+    <div class="result">
+      <div class="k">相差</div>
+      <div class="v" id="diffOut">—</div>
+      <div class="sub" id="diffSub"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="p-shift" hidden>
+    <div class="row-inline">
+      <div class="field"><label>基准日期</label><input class="input" id="base" type="date"></div>
+      <div class="field" style="max-width:140px"><label>偏移天数</label><input class="input" id="shift" type="number" step="1" value="30"></div>
+      <button class="btn" id="calcShift">计算</button>
+    </div>
+    <div class="result">
+      <div class="k">结果日期</div>
+      <div class="v" id="shiftOut">—</div>
+      <div class="sub" id="shiftSub"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="p-ts" hidden>
+    <div class="grid">
+      <div class="field"><label>时间戳（秒或毫秒，自动识别）</label>
+        <div class="row-inline"><input class="input" id="tsIn" type="text" placeholder="如 1793000000"><button class="btn" id="tsNow">现在</button></div>
+      </div>
+      <div class="field"><label>日期时间 → 时间戳</label><input class="input" id="dtIn" type="datetime-local"></div>
+    </div>
+    <div class="result">
+      <div class="k">解析结果</div>
+      <div class="v" id="tsOut" style="font-size:19px">—</div>
+      <div class="sub" id="tsSub"></div>
+    </div>
+  </div>
+
+  <p style="color:var(--muted);font-size:13px;margin-top:16px">日期差按自然日计算（含跨月跨年）；时间戳解析为本机时区。</p>
+</main>
+
+<footer class="footer"><div class="wrap">© 2026 拉格朗日 · 本地运行，数据不上传</div></footer>
+
+<script>
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function parseDate(s){var p=s.split('-');return new Date(parseInt(p[0],10),parseInt(p[1],10)-1,parseInt(p[2],10));}
+function weekday(d){return '周'+['日','一','二','三','四','五','六'][d.getDay()];}
+(function initDates(){
+  var now=new Date();
+  document.getElementById('d1').value=iso(now);
+  var later=new Date(now.getTime()+30*86400000);
+  document.getElementById('d2').value=iso(later);
+  document.getElementById('base').value=iso(now);
+})();
+function calcDiff(){
+  var a=parseDate(document.getElementById('d1').value);
+  var b=parseDate(document.getElementById('d2').value);
+  if(isNaN(a)||isNaN(b)){document.getElementById('diffOut').textContent='—';return;}
+  var days=Math.round((b-a)/86400000);
+  var abs=Math.abs(days);
+  document.getElementById('diffOut').innerHTML=(days<0?'-':'')+abs+'<small>天</small>';
+  document.getElementById('diffSub').textContent=
+    '约 '+(abs/7).toFixed(1)+' 周 · '+(abs/30.44).toFixed(1)+' 个月 · '+(abs/365.25).toFixed(2)+' 年'
+    +' ｜ '+(days>=0?'结束晚于开始':'结束早于开始');
+}
+function calcShift(){
+  var b=parseDate(document.getElementById('base').value);
+  var n=parseInt(document.getElementById('shift').value,10);
+  if(isNaN(b)||isNaN(n)){document.getElementById('shiftOut').textContent='—';return;}
+  var r=new Date(b.getTime()+n*86400000);
+  document.getElementById('shiftOut').innerHTML=iso(r)+'<small>'+weekday(r)+'</small>';
+  document.getElementById('shiftSub').textContent=iso(b)+' '+(n>=0?'+':'')+n+' 天 = '+iso(r)+' '+weekday(r);
+}
+function parseTs(){
+  var raw=document.getElementById('tsIn').value.trim();
+  if(!raw){document.getElementById('tsOut').textContent='—';document.getElementById('tsSub').textContent='';return;}
+  var n=Number(raw);
+  if(!isFinite(n)){document.getElementById('tsOut').textContent='无法解析';return;}
+  var ms=Math.abs(n)>1e11?n:n*1000;
+  var d=new Date(ms);
+  if(isNaN(d)){document.getElementById('tsOut').textContent='无法解析';return;}
+  document.getElementById('tsOut').innerHTML=iso(d)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0')+'<small>'+weekday(d)+'</small>';
+  document.getElementById('tsSub').textContent='本地时间 ｜ UTC: '+d.toUTCString();
+}
+function parseDt(){
+  var v=document.getElementById('dtIn').value;
+  if(!v){return;}
+  var d=new Date(v);
+  if(isNaN(d)){return;}
+  document.getElementById('tsOut').innerHTML=Math.floor(d.getTime()/1000)+'<small>秒</small> ｜ '+d.getTime()+'<small>毫秒</small>';
+  document.getElementById('tsSub').textContent=v+' = Unix 时间戳（秒）';
+}
+document.getElementById('tabs').addEventListener('click',function(e){
+  var b=e.target.closest('.tab');if(!b)return;
+  document.querySelectorAll('#tabs .tab').forEach(function(x){x.classList.toggle('on',x===b);});
+  ['p-diff','p-shift','p-ts'].forEach(function(id){
+    document.getElementById(id).hidden=(id!==b.dataset.panel);
+  });
+});
+document.getElementById('d1').addEventListener('change',calcDiff);
+document.getElementById('d2').addEventListener('change',calcDiff);
+document.getElementById('calcShift').addEventListener('click',calcShift);
+document.getElementById('base').addEventListener('change',calcShift);
+document.getElementById('shift').addEventListener('input',calcShift);
+document.getElementById('tsIn').addEventListener('input',parseTs);
+document.getElementById('dtIn').addEventListener('input',parseDt);
+document.getElementById('tsNow').addEventListener('click',function(){
+  document.getElementById('tsIn').value=Math.floor(Date.now()/1000);parseTs();
+});
+calcDiff();calcShift();
+function cycleTheme(){
+  var el=document.documentElement;
+  var cur=el.getAttribute('data-theme')||'auto';
+  var next=cur==='auto'?'light':(cur==='light'?'dark':'auto');
+  if(next==='auto'){el.removeAttribute('data-theme');}else{el.setAttribute('data-theme',next);}
+  try{localStorage.setItem('site_theme_v1',next);}catch(e){}
+  document.querySelectorAll('[data-theme-label]').forEach(function(n){
+    n.textContent=next==='auto'?'主题:自动':(next==='light'?'主题:亮色':'主题:暗色');
+  });
+}
+(function(){
+  var t='auto';
+  try{var s=localStorage.getItem('site_theme_v1');if(s==='light'||s==='dark'){t=s;}}catch(e){}
+  var label=t==='auto'?'主题:自动':(t==='light'?'主题:亮色':'主题:暗色');
+  document.querySelectorAll('[data-theme-label]').forEach(function(n){n.textContent=label;});
+})();
+</script>
+</body>
+</html>

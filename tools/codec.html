@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>编解码与文本统计</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+:root{
+  --bg:#FAF9F5;--surface:#FFFFFF;--ink:#20201C;--muted:#6D6B63;--line:#E6E3DA;
+  --accent:#C2452D;--accent-ink:#FFFFFF;--accent-soft:#F5E8E3;--row-hover:#F2EFE8;
+  --radius:8px;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#141416;--surface:#1D1D20;--ink:#EDEBE4;--muted:#9A968C;--line:#2C2C31;
+    --accent:#E4705A;--accent-ink:#1A1210;--accent-soft:#38221D;--row-hover:#232327;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141416;--surface:#1D1D20;--ink:#EDEBE4;--muted:#9A968C;--line:#2C2C31;
+  --accent:#E4705A;--accent-ink:#1A1210;--accent-soft:#38221D;--row-hover:#232327;
+}
+html{background:var(--bg);color:var(--ink)}
+body{font-family:system-ui,-apple-system,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif;
+  line-height:1.75;-webkit-font-smoothing:antialiased;font-size:16px}
+a{color:inherit}
+.wrap{max-width:860px;margin:0 auto;padding:0 24px}
+.topbar{border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:10}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;height:60px;gap:16px}
+.brand{font-weight:700;font-size:15.5px;text-decoration:none;white-space:nowrap}
+.btn,.input,select{height:36px;border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--surface);color:var(--ink);font:inherit;font-size:14.5px;padding:0 14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;
+  transition:background .15s ease,border-color .15s ease}
+.btn:hover{background:var(--row-hover);border-color:var(--muted)}
+.btn:focus-visible,.input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px}
+.btn-mini{height:32px;font-size:13px;padding:0 10px}
+.page-title{font-size:clamp(26px,4vw,34px);font-weight:800;margin:40px 0 6px}
+.page-sub{color:var(--muted);font-size:15px;margin-bottom:26px}
+.block{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:22px;margin-bottom:16px}
+.block h2{font-size:15.5px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.block h2 .hint{font-size:12px;color:var(--muted);font-weight:400;font-family:var(--mono)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+textarea{width:100%;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg);
+  color:var(--ink);font-family:var(--mono);font-size:13.5px;line-height:1.65;padding:12px;resize:vertical;min-height:96px}
+.stats{display:flex;flex-wrap:wrap;gap:12px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:12px 18px;min-width:130px}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat .v{font-family:var(--mono);font-size:21px;font-weight:700}
+.footer{border-top:1px solid var(--line);padding:24px 24px 36px;color:var(--muted);font-size:13px}
+</style>
+<script>(function(){try{var t=localStorage.getItem('site_theme_v1');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+</head>
+<body>
+<header class="topbar"><div class="wrap topbar-inner">
+  <a class="brand" href="../index.html">← 返回主页</a>
+  <button class="btn btn-mini" data-theme-label onclick="cycleTheme()">主题:自动</button>
+</div></header>
+
+<main class="wrap">
+  <h1 class="page-title">编解码与文本统计</h1>
+  <p class="page-sub">Base64、URL 编解码（UTF-8 安全），字符与字节统计</p>
+
+  <div class="block">
+    <h2>Base64 <span class="hint">UTF-8 安全，中文不乱码</span></h2>
+    <div class="toolbar">
+      <button class="btn" id="b64enc">编码 →</button>
+      <button class="btn" id="b64dec">← 解码</button>
+      <button class="btn" id="b64copy" title="复制右侧结果">📋 复制</button>
+    </div>
+    <textarea id="b64a" placeholder="原文"></textarea>
+    <div style="height:8px"></div>
+    <textarea id="b64b" placeholder="Base64"></textarea>
+  </div>
+
+  <div class="block">
+    <h2>URL 编解码 <span class="hint">encodeURIComponent 语义</span></h2>
+    <div class="toolbar">
+      <button class="btn" id="urlenc">编码 →</button>
+      <button class="btn" id="urldec">← 解码</button>
+      <button class="btn" id="urlcopy" title="复制右侧结果">📋 复制</button>
+    </div>
+    <textarea id="urla" placeholder="原文 / URL"></textarea>
+    <div style="height:8px"></div>
+    <textarea id="urlb" placeholder="编码结果"></textarea>
+  </div>
+
+  <div class="block">
+    <h2>文本统计</h2>
+    <textarea id="txt" placeholder="粘贴任意文本，实时统计" style="min-height:120px"></textarea>
+    <div style="height:12px"></div>
+    <div class="stats">
+      <div class="stat"><div class="k">字符数</div><div class="v" id="s1">0</div></div>
+      <div class="stat"><div class="k">字符数(去空白)</div><div class="v" id="s2">0</div></div>
+      <div class="stat"><div class="k">UTF-8 字节</div><div class="v" id="s3">0</div></div>
+      <div class="stat"><div class="k">行数</div><div class="v" id="s4">0</div></div>
+      <div class="stat"><div class="k">词数(中英混合)</div><div class="v" id="s5">0</div></div>
+    </div>
+  </div>
+
+  <p style="color:var(--muted);font-size:13px;margin-top:14px">所有处理在本地完成，数据不上传。</p>
+</main>
+
+<footer class="footer"><div class="wrap">© 2026 拉格朗日 · 本地运行，数据不上传</div></footer>
+
+<script>
+function b64enc(){
+  var s=document.getElementById('b64a').value;
+  var bytes=new TextEncoder().encode(s);
+  var bin='';
+  bytes.forEach(function(b){bin+=String.fromCharCode(b);});
+  document.getElementById('b64b').value=btoa(bin);
+}
+function b64dec(){
+  var s=document.getElementById('b64b').value.trim();
+  try{
+    var bin=atob(s);
+    var bytes=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++){bytes[i]=bin.charCodeAt(i);}
+    document.getElementById('b64a').value=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+  }catch(e){
+    document.getElementById('b64a').value='[解码失败: '+e.message+']';
+  }
+}
+function urlenc(){
+  document.getElementById('urlb').value=encodeURIComponent(document.getElementById('urla').value);
+}
+function urldec(){
+  try{
+    document.getElementById('urla').value=decodeURIComponent(document.getElementById('urlb').value);
+  }catch(e){
+    document.getElementById('urla').value='[解码失败: '+e.message+']';
+  }
+}
+function copyOf(id){
+  var v=document.getElementById(id).value;
+  if(!v){return;}
+  navigator.clipboard.writeText(v);
+}
+document.getElementById('b64enc').addEventListener('click',b64enc);
+document.getElementById('b64dec').addEventListener('click',b64dec);
+document.getElementById('b64copy').addEventListener('click',function(){copyOf('b64b');});
+document.getElementById('urlenc').addEventListener('click',urlenc);
+document.getElementById('urldec').addEventListener('click',urldec);
+document.getElementById('urlcopy').addEventListener('click',function(){copyOf('urlb');});
+document.getElementById('txt').addEventListener('input',function(){
+  var t=document.getElementById('txt').value;
+  document.getElementById('s1').textContent=t.length;
+  document.getElementById('s2').textContent=t.replace(/\s/g,'').length;
+  document.getElementById('s3').textContent=new TextEncoder().encode(t).length;
+  document.getElementById('s4').textContent=t===''?0:t.split('\n').length;
+  var cjk=(t.match(/[\u4e00-\u9fff]/g)||[]).length;
+  var latin=(t.match(/[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g)||[]).length;
+  document.getElementById('s5').textContent=cjk+latin;
+});
+function cycleTheme(){
+  var el=document.documentElement;
+  var cur=el.getAttribute('data-theme')||'auto';
+  var next=cur==='auto'?'light':(cur==='light'?'dark':'auto');
+  if(next==='auto'){el.removeAttribute('data-theme');}else{el.setAttribute('data-theme',next);}
+  try{localStorage.setItem('site_theme_v1',next);}catch(e){}
+  document.querySelectorAll('[data-theme-label]').forEach(function(n){
+    n.textContent=next==='auto'?'主题:自动':(next==='light'?'主题:亮色':'主题:暗色');
+  });
+}
+(function(){
+  var t='auto';
+  try{var s=localStorage.getItem('site_theme_v1');if(s==='light'||s==='dark'){t=s;}}catch(e){}
+  var label=t==='auto'?'主题:自动':(t==='light'?'主题:亮色':'主题:暗色');
+  document.querySelectorAll('[data-theme-label]').forEach(function(n){n.textContent=label;});
+})();
+</script>
+</body>
+</html>
