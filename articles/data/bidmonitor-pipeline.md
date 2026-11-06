@@ -2,7 +2,7 @@
 title: 招标情报系统：多源聚合、AI 摘要与自动推送
 slug: bidmonitor-pipeline
 date: 2026-11-06
-tags: 爬虫, 数据, AI
+tags: 爬虫，数据，AI
 summary: 从十几个招标信息源到每天一张飞书卡片的全链路设计与取舍。
 cover: /assets/articles/covers/lark-cli-personal-workbench.webp
 ---

@@ -53,6 +53,7 @@ body{padding:0;overflow:hidden}
 </style>
 
 
+
 <style id="pw-hide-style">body{visibility:hidden}</style>
 <style id="pw-gate-style">
 #pw-gate{position:fixed;inset:0;z-index:2147483647;visibility:visible;background-color:#fff;background-image:linear-gradient(#00000006 1px,transparent 0),linear-gradient(90deg,#00000006 1px,transparent 0);background-size:32px 32px;display:flex;align-items:center;justify-content:center;font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans",Arial,sans-serif}
@@ -267,10 +268,17 @@ body{padding:0;overflow:hidden}
 
   function today(){ var d = new Date(); var p = function(n){ return (n<10?'0':'') + n; }; return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()); }
   function slugify(s){ return (s||'').trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60) || ('post-' + Date.now()); }
+  function normSlug(s){
+    s = (s || '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '');
+    if(!s){ s = 'post-' + (new Date()).toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.random().toString(36).slice(2,6); }
+    return s.slice(0, 64);
+  }
   function collect(){
+    var slug = normSlug($('f-slug').value || $('f-title').value);
+    if(document.activeElement !== $('f-slug')){ $('f-slug').value = slug; }
     return {
       title: $('f-title').value.trim() || '未命名',
-      slug: $('f-slug').value.trim() || slugify($('f-title').value),
+      slug: slug,
       date: $('f-date').value.trim() || today(),
       tags: $('f-tags').value.trim(),
       summary: $('f-sum').value.trim(),

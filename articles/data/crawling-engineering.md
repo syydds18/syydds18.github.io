@@ -2,7 +2,7 @@
 title: 采集工程化：让数据管道稳定跑过三个月
 slug: crawling-engineering
 date: 2026-11-03
-tags: 爬虫, 工程化
+tags: 爬虫，工程化
 summary: 抓得到不等于抓得稳——调度、守卫、日志三件套才是数据管道的命。
 cover: /assets/articles/covers/ai-seo-automation.webp
 ---

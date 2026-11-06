@@ -2,7 +2,7 @@
 title: 让造价工具更聪明：文件格式解析与智能组价
 slug: smart-pricing
 date: 2026-10-28
-tags: 工程造价, 工具
+tags: 工程造价，工具
 summary: 从造价数据文件的格式解析到一键组价——把重复劳动交给脚本的完整路径。
 cover: /assets/articles/covers/five-ai-design-models.webp
 ---
