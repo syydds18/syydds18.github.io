@@ -266,6 +266,7 @@ a{color:inherit}
         </div>
       </div>
       <div id="ai-out" style="margin-top:14px;white-space:pre-wrap;font-size:14px;line-height:1.95"></div>
+      <div id="ai-hist" style="margin-top:18px"></div>
     </section>
   </div>
 </main>
@@ -352,6 +353,7 @@ function build(){
   renderHoroscope();
   try {
     document.getElementById('ai-panel').hidden = !(localStorage.getItem('lgr_admin_v1') === '1');
+    if (!document.getElementById('ai-panel').hidden) loadHistory();
   } catch (e) {}
 }
 
@@ -509,7 +511,38 @@ function runAI(){
     if (!x.d || !x.d.text) throw new Error((x.d && x.d.error) || ('请求失败 ' + x.s));
     out.textContent = x.d.text;
   }).catch(function(e){ out.textContent = '生成失败：' + (e && e.message || e); })
-    .then(function(){ btn.disabled = false; });
+    .then(function(){ btn.disabled = false; loadHistory(); });
+}
+function fmtTs(ts){
+  var d = new Date(ts * 1000);
+  return (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+}
+function loadHistory(){
+  var tok = null;
+  try { tok = localStorage.getItem('lgr_api_token'); } catch (e) {}
+  var box = document.getElementById('ai-hist');
+  if (!tok) { box.innerHTML = '<div style="color:var(--ink-3);font-size:12px">生成历史：首次生成（或输入开发者密码）后可见</div>'; return; }
+  fetch(API + '/api/interpret/history', {headers: {'Authorization': 'Bearer ' + tok}}).then(function(r){
+    return r.json().then(function(d){ return {s: r.status, d: d}; });
+  }).then(function(x){
+    if (x.s === 401) { try { localStorage.removeItem('lgr_api_token'); } catch (e) {} box.innerHTML = '<div style="color:var(--ink-3);font-size:12px">生成历史：登录已过期，重新生成一次即可恢复</div>'; return; }
+    var items = (x.d && x.d.items) || [];
+    if (!items.length) { box.innerHTML = '<div style="color:var(--ink-3);font-size:12px">生成历史：暂无记录</div>'; return; }
+    box.innerHTML = '<div style="font-size:12px;color:var(--ink-3);margin-bottom:8px">生成历史（最近 ' + items.length + ' 次，点条目可回看全文/失败原因）</div>' +
+      items.map(function(it, i){
+        var ok = it.status === 'ok';
+        return '<div class="ai-hist-item" data-i="' + i + '" style="cursor:pointer;padding:9px 12px;border:1px solid ' + (ok ? 'var(--line)' : 'rgba(194,69,45,.45)') + ';border-radius:10px;margin-bottom:6px;font-size:12.5px;line-height:1.6">' +
+          '<b>' + fmtTs(it.ts) + '</b> &nbsp;' + (it.info || '') + (it.date ? ' &nbsp;运限 ' + it.date : '') +
+          ' &nbsp;<span style="color:' + (ok ? 'var(--ink-3)' : '#C2452D') + '">' + (ok ? '✓ ' + (it.text || '').length + ' 字' : '✗ 失败：' + (it.error || '未知')) + '</span></div>';
+      }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('.ai-hist-item'), function(el){
+      el.addEventListener('click', function(){
+        var it = items[+el.getAttribute('data-i')];
+        document.getElementById('ai-out').textContent = it.status === 'ok' ? (it.text || '') : ('【该次生成失败】\n失败原因：' + (it.error || '未知'));
+        document.getElementById('ai-out').scrollIntoView({behavior: 'smooth'});
+      });
+    });
+  }).catch(function(e){ box.innerHTML = '<div style="color:var(--ink-3);font-size:12px">生成历史加载失败：' + (e && e.message || e) + '</div>'; });
 }
 document.getElementById('ai-go').addEventListener('click', runAI);
 
