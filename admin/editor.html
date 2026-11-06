@@ -28,6 +28,12 @@ body{padding:0;overflow:hidden}
 .toolbar{display:flex;flex-wrap:wrap;gap:6px;padding:9px 22px;border-bottom:1px solid var(--line);background:#fff}
 .tb{font-size:12px;padding:5px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;color:var(--t2)}
 .tb:hover{border-color:var(--ink);color:var(--ink)}
+.dd{position:relative;user-select:none;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dd-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;min-width:340px;max-height:340px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 14px 36px rgba(0,0,0,.13);z-index:80;padding:5px}
+.dd.open .dd-menu{display:block}
+.dd-item{padding:8px 11px;font-size:12px;border-radius:7px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--t2)}
+.dd-item:hover{background:#f2f2f4;color:var(--ink)}
+.dd-empty{padding:8px 11px;font-size:12px;color:#999}
 .split{display:flex;height:calc(100vh - 208px)}
 #editor{flex:1;border:none;outline:none;resize:none;padding:22px 26px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;line-height:1.85;color:var(--ink);background:#fff;border-right:1px solid var(--line)}
 .preview{flex:1;overflow:auto;padding:10px 30px 40px;background:#fff}
@@ -191,7 +197,7 @@ body{padding:0;overflow:hidden}
 <button class="tb" data-w="link">链接</button>
 <button class="tb" data-w="table">表格</button>
 <button class="tb" data-w="hr">分割线</button>
-<select class="tb" id="f-load" style="max-width:180px"><option value="">载入已有文章…</option></select>
+<div class="tb dd" id="f-load"><span id="f-load-label">载入已有文章…</span><div class="dd-menu" id="f-load-menu"></div></div>
 <button class="tb" id="btn-load">载入</button>
 <div class="sp"></div>
 <span class="status" id="draft-state">草稿自动保存于本机</span>
@@ -237,17 +243,50 @@ body{padding:0;overflow:hidden}
   $('lock-btn').addEventListener('click', lockCheck);
   $('lock-pass').addEventListener('keydown', function(e){ if(e.key === 'Enter') lockCheck(); });
 
-  // —— 载入已有文章 ——
-  fetch('/articles/list.json').then(function(r){ return r.json(); }).then(function(list){
-    (list || []).forEach(function(it){
-      var o = document.createElement('option');
-      o.value = it.slug; o.textContent = (it.date || '') + ' · ' + it.title;
-      $('f-load').appendChild(o);
+  // —— 载入已有文章（自绘下拉，避免原生 select 弹层闪关） ——
+  var loadList = [], ddSlug = '';
+  function fillLoadList(){
+    var menu = $('f-load-menu');
+    menu.innerHTML = '';
+    if(!loadList.length){
+      menu.innerHTML = '<div class="dd-empty">列表为空</div>';
+      return;
+    }
+    loadList.forEach(function(it){
+      var d = document.createElement('div');
+      d.className = 'dd-item';
+      d.textContent = (it.date || '') + ' · ' + it.title;
+      d.addEventListener('click', function(){
+        ddSlug = it.slug;
+        $('f-load-label').textContent = it.title;
+        $('f-load').classList.remove('open');
+        $('draft-state').innerHTML = '<b>已选</b> · ' + it.title;
+      });
+      menu.appendChild(d);
     });
-  }).catch(function(){});
+    $('draft-state').innerHTML = '<b>文章列表已就绪</b> · 共 ' + loadList.length + ' 篇';
+  }
+  function fetchLoadList(n){
+    fetch('/articles/list.json').then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function(list){
+      loadList = list || [];
+      fillLoadList();
+    }).catch(function(){
+      $('draft-state').innerHTML = '<b>文章列表加载失败</b>，点「载入」自动重试';
+      if(n > 0){ setTimeout(function(){ fetchLoadList(n - 1); }, 1500); }
+    });
+  }
+  fetchLoadList(3);
+  $('f-load').addEventListener('click', function(e){
+    if(e.target.closest('.dd-menu')) return;
+    this.classList.toggle('open');
+  });
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('#f-load')){ $('f-load').classList.remove('open'); }
+  });
   $('btn-load').addEventListener('click', function(){
-    var slug = $('f-load').value;
-    if(!slug){ $('draft-state').innerHTML = '<b>先选择要载入的文章</b>'; return; }
+    if(loadList.length === 0){ fetchLoadList(3); $('draft-state').innerHTML = '正在重新加载文章列表…'; return; }
+    var slug = ddSlug;
+    if(!slug){ $('f-load').classList.add('open'); $('draft-state').innerHTML = '<b>先选择要载入的文章</b>'; return; }
     fetch('/articles/data/' + slug + '.md').then(function(r){ return r.text(); }).then(function(md){
       var meta = {}, body = md;
       var m = md.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
