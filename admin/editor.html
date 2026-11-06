@@ -39,7 +39,20 @@ body{padding:0;overflow:hidden}
 .status b{color:var(--ink)}
 .hint{font-size:11px;color:var(--t3);padding:0 22px 10px;background:#fdfdfd}
 @media(max-width:860px){.split{flex-direction:column;height:auto}#editor{height:40vh;border-right:none;border-bottom:1px solid var(--line)}.preview{height:40vh}}
+#admin-lock{position:fixed;inset:0;z-index:2147483647;background:#fff;background-image:linear-gradient(#00000006 1px,transparent 0),linear-gradient(90deg,#00000006 1px,transparent 0);background-size:32px 32px;display:flex;align-items:center;justify-content:center;font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans",Arial,sans-serif}
+#admin-lock .lock-card{width:min(330px,86vw);box-sizing:border-box;background:#fff;border:1px solid var(--ink);border-radius:16px;padding:30px 26px 26px;text-align:center}
+#admin-lock .pw-mark{width:64px;height:64px;object-fit:contain;filter:drop-shadow(5px 6px #ffe28ab8);display:block;margin:0 auto 12px}
+#admin-lock h2{font-size:18px;margin:0 0 6px}
+#admin-lock p.sub{font-size:13px;color:var(--t2);margin:0 0 16px}
+#admin-lock input{width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;outline:none;font-family:inherit}
+#admin-lock input:focus{border-color:var(--ink)}
+#admin-lock button{margin-top:11px;width:100%;padding:11px;border-radius:10px;border:1px solid var(--ink);background:var(--hl);color:var(--ink);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+#admin-lock button:hover{background:#ffd75e}
+#admin-lock .err{color:#c0392b;font-size:12.5px;margin:10px 0 0;visibility:hidden}
+#admin-lock.shake .lock-card{animation:pw-shake .4s}
 </style>
+
+
 <style id="pw-hide-style">body{visibility:hidden}</style>
 <style id="pw-gate-style">
 #pw-gate{position:fixed;inset:0;z-index:2147483647;visibility:visible;background-color:#fff;background-image:linear-gradient(#00000006 1px,transparent 0),linear-gradient(90deg,#00000006 1px,transparent 0);background-size:32px 32px;display:flex;align-items:center;justify-content:center;font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans",Arial,sans-serif}
@@ -59,22 +72,29 @@ body{padding:0;overflow:hidden}
 </style>
 <script id="pw-gate-js">
 (function(){
-  var K='lgr_access_v1',H='ce6e5f08bbc81867000373e222ea71ff022385436bee9cb427502c118574c1b2';
+  var K='lgr_access_v1',H='ce6e5f08bbc81867000373e222ea71ff022385436bee9cb427502c118574c1b2',HA='8cb3003ac7f84ee859a7d99d5efcb01426bfdaf2103f3d058ca4380576e23365';
   function reveal(){
     var s=document.getElementById('pw-hide-style');
     if(s&&s.parentNode){ s.disabled=true; if(s.parentNode) s.parentNode.removeChild(s); }
     if(document.body) document.body.style.visibility='visible';
   }
   function unlock(){ try{localStorage.setItem(K,'1')}catch(e){} location.reload(); }
+  function unlockAdmin(){ try{localStorage.setItem('lgr_admin_v1','1')}catch(e){} unlock(); }
   function fail(){ var g=document.getElementById('pw-gate'); if(!g)return; g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake'); var e=document.getElementById('pw-err'); if(e)e.style.visibility='visible'; }
   function check(){
     var i=document.getElementById('pw-in'),v=i?i.value:'';
     if(window.crypto&&crypto.subtle&&crypto.subtle.digest&&window.TextEncoder){
       crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)).then(function(buf){
         var h=[].map.call(new Uint8Array(buf),function(b){return('0'+b.toString(16)).slice(-2)}).join('');
-        if(h===H)unlock();else fail();
+        if(h===H)unlock();
+        else if(h===HA)unlockAdmin();
+        else fail();
       },fail);
-    }else{ if(v===atob('MjEzMzUx'))unlock();else fail(); }
+    }else{
+      if(v===atob('MjEzMzUx'))unlock();
+      else if(v===atob('MjEzMzUxMTAwNw=='))unlockAdmin();
+      else fail();
+    }
   }
   var passed=false; try{passed=localStorage.getItem(K)==='1'}catch(e){}
   if(passed){ reveal(); return; }
@@ -92,6 +112,16 @@ body{padding:0;overflow:hidden}
 <script id="site-extra-js">
 (function(){
   window.addEventListener('load',function(){ setTimeout(function(){
+    try{
+      if(localStorage.getItem('lgr_admin_v1')==='1' && !document.getElementById('lgr-admin-pill')){
+        var p=document.createElement('a');
+        p.id='lgr-admin-pill';
+        p.href='/admin/editor.html';
+        p.textContent='✎ 写文章';
+        p.style.cssText='position:fixed;right:22px;bottom:22px;z-index:2147483000;background:#ffe28a;color:#1a1a1a;border:1px solid #1a1a1a;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:700;text-decoration:none;font-family:"Helvetica Neue",-apple-system,"PingFang SC",sans-serif';
+        document.body.appendChild(p);
+      }
+    }catch(e){}
     try{
       if(document.querySelector('a.acard[data-extra]'))return;
       var seed=document.querySelector('a.acard');
@@ -122,6 +152,16 @@ body{padding:0;overflow:hidden}
 </script>
 </head>
 <body>
+<div id="admin-lock" style="display:none">
+<div class="lock-card">
+<img class="pw-mark" src="/apple-icon.png" alt=""/>
+<h2>管理模式</h2>
+<p class="sub">输入开发者密码，解锁文章发布</p>
+<input id="lock-pass" type="password" inputmode="numeric" autocomplete="off" placeholder="开发者密码"/>
+<button id="lock-btn" type="button">解锁</button>
+<p class="err" id="lock-err">密码不对，再试试</p>
+</div>
+</div>
 <div class="top">
 <img class="logo" src="/apple-icon.png" alt=""/>
 <h1>拉格朗日 · Markdown 编辑器</h1>
@@ -150,6 +190,8 @@ body{padding:0;overflow:hidden}
 <button class="tb" data-w="link">链接</button>
 <button class="tb" data-w="table">表格</button>
 <button class="tb" data-w="hr">分割线</button>
+<select class="tb" id="f-load" style="max-width:180px"><option value="">载入已有文章…</option></select>
+<button class="tb" id="btn-load">载入</button>
 <div class="sp"></div>
 <span class="status" id="draft-state">草稿自动保存于本机</span>
 </div>
@@ -170,7 +212,59 @@ body{padding:0;overflow:hidden}
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
-  var DRAFT = 'lgr_editor_draft', PATK = 'lgr_gh_pat';
+  var DRAFT = 'lgr_editor_draft', PATK = 'lgr_gh_pat', AK = 'lgr_admin_v1';
+  var H_ADMIN = '8cb3003ac7f84ee859a7d99d5efcb01426bfdaf2103f3d058ca4380576e23365';
+
+  // —— 管理模式锁 ——
+  function adminOn(){ return localStorage.getItem(AK) === '1'; }
+  function lockFail(){
+    var g = $('admin-lock'); g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake');
+    $('lock-err').style.visibility = 'visible';
+  }
+  function lockCheck(){
+    var v = $('lock-pass').value || '';
+    var done = function(h){
+      if(h === H_ADMIN){ localStorage.setItem(AK, '1'); $('admin-lock').style.display = 'none'; }
+      else lockFail();
+    };
+    if(window.crypto && crypto.subtle && crypto.subtle.digest && window.TextEncoder){
+      crypto.subtle.digest('SHA-256', new TextEncoder().encode(v)).then(function(buf){
+        done([].map.call(new Uint8Array(buf), function(b){ return ('0'+b.toString(16)).slice(-2); }).join(''));
+      }, lockFail);
+    }else{ done(v === atob('MjEzMzUxMTAwNw==') ? H_ADMIN : ''); }
+  }
+  if(!adminOn()){ $('admin-lock').style.display = 'flex'; }
+  $('lock-btn').addEventListener('click', lockCheck);
+  $('lock-pass').addEventListener('keydown', function(e){ if(e.key === 'Enter') lockCheck(); });
+
+  // —— 载入已有文章 ——
+  fetch('/articles/list.json').then(function(r){ return r.json(); }).then(function(list){
+    (list || []).forEach(function(it){
+      var o = document.createElement('option');
+      o.value = it.slug; o.textContent = (it.date || '') + ' · ' + it.title;
+      $('f-load').appendChild(o);
+    });
+  }).catch(function(){});
+  $('btn-load').addEventListener('click', function(){
+    var slug = $('f-load').value;
+    if(!slug){ $('draft-state').innerHTML = '<b>先选择要载入的文章</b>'; return; }
+    fetch('/articles/data/' + slug + '.md').then(function(r){ return r.text(); }).then(function(md){
+      var meta = {}, body = md;
+      var m = md.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+      if(m){
+        body = md.slice(m[0].length);
+        m[1].split(/\r?\n/).forEach(function(line){
+          var i = line.indexOf(':');
+          if(i > 0){ meta[line.slice(0,i).trim()] = line.slice(i+1).trim(); }
+        });
+      }
+      $('f-title').value = meta.title || ''; $('f-slug').value = meta.slug || slug;
+      $('f-date').value = meta.date || ''; $('f-tags').value = meta.tags || '';
+      $('f-sum').value = meta.summary || ''; $('editor').value = body.trim();
+      render();
+      $('draft-state').innerHTML = '<b>已载入</b> · ' + (meta.title || slug);
+    });
+  });
 
   function today(){ var d = new Date(); var p = function(n){ return (n<10?'0':'') + n; }; return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()); }
   function slugify(s){ return (s||'').trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60) || ('post-' + Date.now()); }

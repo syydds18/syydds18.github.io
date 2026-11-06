@@ -15,6 +15,8 @@
 .art-card .s{font-size:13.5px;color:var(--t2);margin:0}
 .empty{color:var(--t3);font-size:13.5px;padding:18px 2px}
 </style>
+
+
 <style id="pw-hide-style">body{visibility:hidden}</style>
 <style id="pw-gate-style">
 #pw-gate{position:fixed;inset:0;z-index:2147483647;visibility:visible;background-color:#fff;background-image:linear-gradient(#00000006 1px,transparent 0),linear-gradient(90deg,#00000006 1px,transparent 0);background-size:32px 32px;display:flex;align-items:center;justify-content:center;font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans",Arial,sans-serif}
@@ -34,22 +36,29 @@
 </style>
 <script id="pw-gate-js">
 (function(){
-  var K='lgr_access_v1',H='ce6e5f08bbc81867000373e222ea71ff022385436bee9cb427502c118574c1b2';
+  var K='lgr_access_v1',H='ce6e5f08bbc81867000373e222ea71ff022385436bee9cb427502c118574c1b2',HA='8cb3003ac7f84ee859a7d99d5efcb01426bfdaf2103f3d058ca4380576e23365';
   function reveal(){
     var s=document.getElementById('pw-hide-style');
     if(s&&s.parentNode){ s.disabled=true; if(s.parentNode) s.parentNode.removeChild(s); }
     if(document.body) document.body.style.visibility='visible';
   }
   function unlock(){ try{localStorage.setItem(K,'1')}catch(e){} location.reload(); }
+  function unlockAdmin(){ try{localStorage.setItem('lgr_admin_v1','1')}catch(e){} unlock(); }
   function fail(){ var g=document.getElementById('pw-gate'); if(!g)return; g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake'); var e=document.getElementById('pw-err'); if(e)e.style.visibility='visible'; }
   function check(){
     var i=document.getElementById('pw-in'),v=i?i.value:'';
     if(window.crypto&&crypto.subtle&&crypto.subtle.digest&&window.TextEncoder){
       crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)).then(function(buf){
         var h=[].map.call(new Uint8Array(buf),function(b){return('0'+b.toString(16)).slice(-2)}).join('');
-        if(h===H)unlock();else fail();
+        if(h===H)unlock();
+        else if(h===HA)unlockAdmin();
+        else fail();
       },fail);
-    }else{ if(v===atob('MjEzMzUx'))unlock();else fail(); }
+    }else{
+      if(v===atob('MjEzMzUx'))unlock();
+      else if(v===atob('MjEzMzUxMTAwNw=='))unlockAdmin();
+      else fail();
+    }
   }
   var passed=false; try{passed=localStorage.getItem(K)==='1'}catch(e){}
   if(passed){ reveal(); return; }
@@ -67,6 +76,16 @@
 <script id="site-extra-js">
 (function(){
   window.addEventListener('load',function(){ setTimeout(function(){
+    try{
+      if(localStorage.getItem('lgr_admin_v1')==='1' && !document.getElementById('lgr-admin-pill')){
+        var p=document.createElement('a');
+        p.id='lgr-admin-pill';
+        p.href='/admin/editor.html';
+        p.textContent='✎ 写文章';
+        p.style.cssText='position:fixed;right:22px;bottom:22px;z-index:2147483000;background:#ffe28a;color:#1a1a1a;border:1px solid #1a1a1a;border-radius:999px;padding:10px 18px;font-size:13px;font-weight:700;text-decoration:none;font-family:"Helvetica Neue",-apple-system,"PingFang SC",sans-serif';
+        document.body.appendChild(p);
+      }
+    }catch(e){}
     try{
       if(document.querySelector('a.acard[data-extra]'))return;
       var seed=document.querySelector('a.acard');
