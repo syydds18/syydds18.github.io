@@ -56,6 +56,8 @@ textarea{width:100%;border:1px solid var(--line);border-radius:var(--radius);bac
 
 
 
+
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet"/>
 <style id="pw-hide-style">body{visibility:hidden}</style>
 <style id="pw-gate-style">
 #pw-gate{position:fixed;inset:0;z-index:2147483647;visibility:visible;background-color:#fff;background-image:linear-gradient(#00000006 1px,transparent 0),linear-gradient(90deg,#00000006 1px,transparent 0);background-size:32px 32px;display:flex;align-items:center;justify-content:center;font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans",Arial,sans-serif}
@@ -67,6 +69,8 @@ textarea{width:100%;border:1px solid var(--line);border-radius:var(--radius);bac
 #pw-gate #pw-in:focus{border-color:#1a1a1a}
 #pw-gate .pw-btn{margin-top:11px;width:100%;padding:11px;border-radius:10px;border:1px solid #1a1a1a;background:#ffe28a;color:#1a1a1a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
 #pw-gate .pw-btn:hover{background:#ffd75e}
+#pw-gate .pw-terms{margin:13px 0 0;font-size:11.5px;color:#999;line-height:1.7}
+#pw-gate .pw-terms a{color:#555;text-decoration:underline}
 #pw-gate #pw-err{color:#c0392b;font-size:12.5px;margin:10px 0 0;visibility:hidden}
 #pw-gate.shake .pw-card{animation:pw-shake .4s}
 @keyframes pw-shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
@@ -95,7 +99,7 @@ textarea{width:100%;border:1px solid var(--line);border-radius:var(--radius);bac
   window.addEventListener('load',function(){ setTimeout(function(){
     if(!document.body) return;
     var d=document.createElement('div'); d.id='pw-gate';
-    d.innerHTML='<div class="pw-card"><img class="pw-mark" src="/apple-icon.png" alt=""/><h1 class="pw-title">拉格朗日®</h1><p class="pw-sub">输入访问密码，进入工具箱</p><input id="pw-in" type="password" inputmode="numeric" autocomplete="off" placeholder="访问密码"/><button class="pw-btn" id="pw-btn" type="button">进入</button><p id="pw-err">密码不对，再试试</p></div>';
+    d.innerHTML='<div class="pw-card"><img class="pw-mark" src="/apple-icon.png" alt=""/><h1 class="pw-title">拉格朗日®</h1><p class="pw-sub">输入访问密码，进入工具箱</p><input id="pw-in" type="password" inputmode="numeric" autocomplete="off" placeholder="访问密码"/><button class="pw-btn" id="pw-btn" type="button">进入</button><p class="pw-terms"><a href="/terms.html" target="_blank" rel="noopener">《使用条款与免责声明》</a> · 禁止爬虫抓取与收录</p><p id="pw-err">密码不对，再试试</p></div>';
     document.body.appendChild(d);
     var b=document.getElementById('pw-btn'),i=document.getElementById('pw-in');
     b.addEventListener('click',check);
