@@ -168,7 +168,7 @@ body{padding:0;overflow:hidden}
 <div class="sp"></div>
 <button class="btn" id="btn-copy">复制 Markdown</button>
 <button class="btn" id="btn-dl">下载 .md</button>
-<button class="btn primary" id="btn-pub">发布到 GitHub</button>
+<button class="btn primary" id="btn-pub">发布上线</button>
 </div>
 
 <div class="meta-row">
@@ -202,11 +202,11 @@ body{padding:0;overflow:hidden}
 </div>
 
 <div class="pub-bar">
-<input type="password" id="f-pat" placeholder="GitHub 令牌（PAT，只存本机浏览器）"/>
+<input type="password" id="f-pat" placeholder="发布令牌（一次性粘贴，只存本机浏览器）"/>
 <button class="btn" id="btn-pat">保存令牌</button>
-<span class="status" id="pub-state">发布流程：写好 → 点「发布到 GitHub」→ 约 1 分钟后生效</span>
+<span class="status" id="pub-state">写好 → 点「发布上线」→ 约 1 分钟后网站生效</span>
 </div>
-<p class="hint">提示：不想配令牌也可以点「复制 Markdown」发给管理员代发。令牌仅存于本机 localStorage，不会上传；建议使用仅含 repo 权限的细粒度令牌。</p>
+<p class="hint">提示：「发布上线」会把文章直接写进网站的内容仓库（网站即刻更新，约 1 分钟生效）。发布令牌只需粘贴一次、仅存本机浏览器；不想配令牌就点「复制 Markdown」发给管理员代发。</p>
 
 <script src="/articles/marked.min.js"></script>
 <script>
@@ -348,7 +348,7 @@ body{padding:0;overflow:hidden}
   }
   $('btn-pub').addEventListener('click', function(){
     var token = ($('f-pat').value || '').trim();
-    if(!token){ $('pub-state').innerHTML = '<b>先填 GitHub 令牌</b>（或改用复制 Markdown 代发）'; return; }
+    if(!token){ $('pub-state').innerHTML = '<b>先粘贴一次发布令牌</b>（只存本机；或改用复制 Markdown 代发）'; return; }
     var d = collect();
     $('btn-pub').disabled = true;
     $('pub-state').innerHTML = '发布中…';
@@ -366,8 +366,8 @@ body{padding:0;overflow:hidden}
       return gh('articles/list.json', 'PUT', { message: '更新文章列表: ' + d.title, content: b64(JSON.stringify(list, null, 2)), sha: cur.sha }, token);
     }).then(function(r){
       if(!r.ok) return r.json().then(function(j){ throw new Error(j.message || ('HTTP ' + r.status)); });
-      $('pub-state').innerHTML = '<b>✓ 已发布</b> · GitHub Pages 约 1 分钟后生效 → ' +
-        '<a href="/articles/view.html?slug=' + d.slug + '" target="_blank">预览</a>';
+      $('pub-state').innerHTML = '<b>✓ 已发布上线</b> · 约 1 分钟后生效 → ' +
+        '<a href="/articles/view.html?slug=' + d.slug + '" target="_blank">查看线上文章</a>';
     }).catch(function(e){
       $('pub-state').innerHTML = '<b>发布失败</b>：' + e.message;
     }).then(function(){ $('btn-pub').disabled = false; });
