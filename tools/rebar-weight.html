@@ -69,6 +69,57 @@ tr:hover td{background:var(--row-hover)}
 @media (max-width:640px){.grid,.result{grid-template-columns:1fr 1fr}}
 </style>
 <script>(function(){try{var t=localStorage.getItem('site_theme_v1');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+
+
+
+<style id="pw-hide-style">body{visibility:hidden}</style>
+<style id="pw-gate-style">
+#pw-gate{position:fixed;inset:0;z-index:2147483647;visibility:visible;background-color:#fff;background-image:linear-gradient(#00000006 1px,transparent 0),linear-gradient(90deg,#00000006 1px,transparent 0);background-size:32px 32px;display:flex;align-items:center;justify-content:center;font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans",Arial,sans-serif}
+#pw-gate .pw-card{width:min(330px,86vw);box-sizing:border-box;background:#fff;border:1px solid #1a1a1a;border-radius:16px;padding:30px 26px 26px;text-align:center}
+#pw-gate .pw-mark{width:76px;height:76px;object-fit:contain;filter:drop-shadow(5px 6px #ffe28ab8);display:block;margin:0 auto 14px;user-select:none}
+#pw-gate .pw-title{font-size:19px;font-weight:800;letter-spacing:.02em;color:#1a1a1a;margin:0 0 6px}
+#pw-gate .pw-sub{font-size:13px;color:#555;margin:0 0 18px}
+#pw-gate #pw-in{width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid #e8e8e8;border-radius:10px;font-size:15px;outline:none;background:#fff;color:#1a1a1a}
+#pw-gate #pw-in:focus{border-color:#1a1a1a}
+#pw-gate .pw-btn{margin-top:11px;width:100%;padding:11px;border-radius:10px;border:1px solid #1a1a1a;background:#ffe28a;color:#1a1a1a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+#pw-gate .pw-btn:hover{background:#ffd75e}
+#pw-gate #pw-err{color:#c0392b;font-size:12.5px;margin:10px 0 0;visibility:hidden}
+#pw-gate.shake .pw-card{animation:pw-shake .4s}
+@keyframes pw-shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
+</style>
+<script id="pw-gate-js">
+(function(){
+  var K='lgr_access_v1',H='ce6e5f08bbc81867000373e222ea71ff022385436bee9cb427502c118574c1b2';
+  function reveal(){
+    var s=document.getElementById('pw-hide-style');
+    if(s&&s.parentNode){ s.disabled=true; if(s.parentNode) s.parentNode.removeChild(s); }
+    if(document.body) document.body.style.visibility='visible';
+  }
+  function unlock(){ try{localStorage.setItem(K,'1')}catch(e){} location.reload(); }
+  function fail(){ var g=document.getElementById('pw-gate'); if(!g)return; g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake'); var e=document.getElementById('pw-err'); if(e)e.style.visibility='visible'; }
+  function check(){
+    var i=document.getElementById('pw-in'),v=i?i.value:'';
+    if(window.crypto&&crypto.subtle&&crypto.subtle.digest&&window.TextEncoder){
+      crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)).then(function(buf){
+        var h=[].map.call(new Uint8Array(buf),function(b){return('0'+b.toString(16)).slice(-2)}).join('');
+        if(h===H)unlock();else fail();
+      },fail);
+    }else{ if(v===atob('MjEzMzUx'))unlock();else fail(); }
+  }
+  var passed=false; try{passed=localStorage.getItem(K)==='1'}catch(e){}
+  if(passed){ reveal(); return; }
+  window.addEventListener('load',function(){ setTimeout(function(){
+    if(!document.body) return;
+    var d=document.createElement('div'); d.id='pw-gate';
+    d.innerHTML='<div class="pw-card"><img class="pw-mark" src="/apple-icon.png" alt=""/><h1 class="pw-title">拉格朗日®</h1><p class="pw-sub">输入访问密码，进入工具箱</p><input id="pw-in" type="password" inputmode="numeric" autocomplete="off" placeholder="访问密码"/><button class="pw-btn" id="pw-btn" type="button">进入</button><p id="pw-err">密码不对，再试试</p></div>';
+    document.body.appendChild(d);
+    var b=document.getElementById('pw-btn'),i=document.getElementById('pw-in');
+    b.addEventListener('click',check);
+    i.addEventListener('keydown',function(e){ if(e.key==='Enter') check(); });
+    setTimeout(function(){ i.focus(); },80);
+  },80); });
+})();
+</script>
 </head>
 <body>
 <header class="topbar"><div class="wrap topbar-inner">
