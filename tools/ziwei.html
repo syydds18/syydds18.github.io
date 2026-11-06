@@ -499,7 +499,7 @@ function runAI(){
   var out = document.getElementById('ai-out');
   var btn = document.getElementById('ai-go');
   btn.disabled = true;
-  out.textContent = '正在推演命盘，约需 1 分钟，请勿关闭页面……';
+  out.textContent = '正在推演命盘，约需 3~5 分钟，请勿关闭页面……';
   ensureToken().then(function(tok){
     return fetch(API + '/api/interpret', {method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok},
