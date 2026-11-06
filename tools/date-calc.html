@@ -75,6 +75,7 @@ a{color:inherit}
 
 
 
+
 <style id="pw-hide-style">body{visibility:hidden}</style>
 <style id="pw-gate-style">
 #pw-gate{position:fixed;inset:0;z-index:2147483647;visibility:visible;background-color:#fff;background-image:linear-gradient(#00000006 1px,transparent 0),linear-gradient(90deg,#00000006 1px,transparent 0);background-size:32px 32px;display:flex;align-items:center;justify-content:center;font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans",Arial,sans-serif}
@@ -135,7 +136,7 @@ a{color:inherit}
 </script>
 <script id="site-extra-js">
 (function(){
-  window.addEventListener('load',function(){ setTimeout(function(){
+  function bootExtras(){ setTimeout(function(){
     try{
       if(localStorage.getItem('lgr_admin_v1')==='1' && !document.getElementById('lgr-admin-pill')){
         var p=document.createElement('a');
@@ -185,7 +186,8 @@ a{color:inherit}
         }
       }
     }catch(e){}
-  },1000); });
+  },1000); }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',bootExtras); }else{ bootExtras(); }
 })();
 </script>
 </head>
