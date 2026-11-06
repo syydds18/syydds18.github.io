@@ -4,7 +4,6 @@ slug: bidmonitor-pipeline
 date: 2026-11-06
 tags: 爬虫，数据，AI
 summary: 从十几个招标信息源到每天一张飞书卡片的全链路设计与取舍。
-cover: /assets/articles/covers/lark-cli-personal-workbench.webp
 ---
 
 做工程的人大概都有过这种早晨：打开七八个招标网站，逐个翻公告，担心漏掉一条对口的标。这件事重复、耗时、且完全值得自动化——于是有了 **招标情报系统（BidMonitor-AI）**。

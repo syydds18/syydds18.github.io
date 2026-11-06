@@ -4,7 +4,6 @@ slug: crawling-engineering
 date: 2026-11-03
 tags: 爬虫，工程化
 summary: 抓得到不等于抓得稳——调度、守卫、日志三件套才是数据管道的命。
-cover: /assets/articles/covers/ai-seo-automation.webp
 ---
 
 写爬虫 demo 的快感在于十行代码就出数；但让一条数据管道**连续稳定跑过三个月**，靠的全是不性感的部分。

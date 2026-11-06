@@ -4,7 +4,6 @@ slug: smart-pricing
 date: 2026-10-28
 tags: 工程造价，工具
 summary: 从造价数据文件的格式解析到一键组价——把重复劳动交给脚本的完整路径。
-cover: /assets/articles/covers/five-ai-design-models.webp
 ---
 
 工程造价里最耗时间的不是判断，而是**把数据搬来搬去**：清单项、定额、材料价，在不同文件与软件之间反复誊抄。这正是「智能套价」工具想解决的问题。
