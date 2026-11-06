@@ -12,6 +12,8 @@
 
 
 
+
+
 <style id="pw-hide-style">body{visibility:hidden}</style>
 <style id="pw-gate-style">
 #pw-gate{position:fixed;inset:0;z-index:2147483647;visibility:visible;background-color:#fff;background-image:linear-gradient(#00000006 1px,transparent 0),linear-gradient(90deg,#00000006 1px,transparent 0);background-size:32px 32px;display:flex;align-items:center;justify-content:center;font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans",Arial,sans-serif}
@@ -107,6 +109,20 @@
           container.appendChild(box);
         });
       }).catch(function(){});
+    }catch(e){}
+    try{
+      if(!document.querySelector('a.social[data-tool-ziwei]')){
+        var seed=document.querySelector('a.social[href="/tools/rebar-weight.html"]');
+        if(seed&&seed.parentNode){
+          var row=seed.cloneNode(true);
+          row.setAttribute('data-tool-ziwei','1');
+          row.setAttribute('href','/tools/ziwei.html');
+          var n1=row.querySelector('.s-idx'); if(n1)n1.textContent='07';
+          var n2=row.querySelector('.s-name'); if(n2)n2.textContent='紫微斗数排盘';
+          var n3=row.querySelector('.s-val'); if(n3)n3.textContent='站内即用，在线排盘';
+          seed.parentNode.appendChild(row);
+        }
+      }
     }catch(e){}
   },1000); });
 })();
