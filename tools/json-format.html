@@ -66,6 +66,7 @@ textarea{width:100%;border:1px solid var(--line);border-radius:var(--radius);bac
 
 
 
+
 <style id="pw-hide-style">body{visibility:hidden}</style>
 <style id="pw-gate-style">
 #pw-gate{position:fixed;inset:0;z-index:2147483647;visibility:visible;background-color:#fff;background-image:linear-gradient(#00000006 1px,transparent 0),linear-gradient(90deg,#00000006 1px,transparent 0);background-size:32px 32px;display:flex;align-items:center;justify-content:center;font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans",Arial,sans-serif}
@@ -92,7 +93,7 @@ textarea{width:100%;border:1px solid var(--line);border-radius:var(--radius);bac
     if(s&&s.parentNode){ s.disabled=true; if(s.parentNode) s.parentNode.removeChild(s); }
     if(document.body) document.body.style.visibility='visible';
   }
-  function unlock(){ try{localStorage.setItem(K,'1')}catch(e){} location.reload(); }
+  function unlock(){ try{document.cookie=K+'=1;path=/;SameSite=Lax';localStorage.removeItem(K)}catch(e){} location.reload(); }
   function unlockAdmin(){ try{localStorage.setItem('lgr_admin_v1','1')}catch(e){} unlock(); }
   function fail(){ var g=document.getElementById('pw-gate'); if(!g)return; g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake'); var e=document.getElementById('pw-err'); if(e)e.style.visibility='visible'; }
   function check(){
@@ -110,7 +111,7 @@ textarea{width:100%;border:1px solid var(--line);border-radius:var(--radius);bac
       else fail();
     }
   }
-  var passed=false; try{passed=localStorage.getItem(K)==='1'}catch(e){}
+  var passed=false; try{passed=document.cookie.split('; ').indexOf(K+'=1')>=0}catch(e){}
   if(passed){ reveal(); return; }
   window.addEventListener('load',function(){ setTimeout(function(){
     if(!document.body) return;
