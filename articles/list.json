@@ -1,0 +1,36 @@
+[
+  {
+    "slug": "bidmonitor-pipeline",
+    "title": "招标情报系统：多源聚合、AI 摘要与自动推送",
+    "date": "2026-11-06",
+    "summary": "从十几个招标信息源到每天一张飞书卡片的全链路设计与取舍。",
+    "cover": "/assets/articles/covers/lark-cli-personal-workbench.webp",
+    "tags": [
+      "爬虫",
+      "数据",
+      "AI"
+    ]
+  },
+  {
+    "slug": "crawling-engineering",
+    "title": "采集工程化：让数据管道稳定跑过三个月",
+    "date": "2026-11-03",
+    "summary": "抓得到不等于抓得稳——调度、守卫、日志三件套才是数据管道的命。",
+    "cover": "/assets/articles/covers/ai-seo-automation.webp",
+    "tags": [
+      "爬虫",
+      "工程化"
+    ]
+  },
+  {
+    "slug": "smart-pricing",
+    "title": "让造价工具更聪明：文件格式解析与智能组价",
+    "date": "2026-10-28",
+    "summary": "从造价数据文件的格式解析到一键组价——把重复劳动交给脚本的完整路径。",
+    "cover": "/assets/articles/covers/five-ai-design-models.webp",
+    "tags": [
+      "工程造价",
+      "工具"
+    ]
+  }
+]

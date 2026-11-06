@@ -74,6 +74,7 @@ tr:hover td{background:var(--row-hover)}
 
 
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet"/>
+
 <style id="pw-hide-style">body{visibility:hidden}</style>
 <style id="pw-gate-style">
 #pw-gate{position:fixed;inset:0;z-index:2147483647;visibility:visible;background-color:#fff;background-image:linear-gradient(#00000006 1px,transparent 0),linear-gradient(90deg,#00000006 1px,transparent 0);background-size:32px 32px;display:flex;align-items:center;justify-content:center;font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans",Arial,sans-serif}
@@ -114,14 +115,44 @@ tr:hover td{background:var(--row-hover)}
   if(passed){ reveal(); return; }
   window.addEventListener('load',function(){ setTimeout(function(){
     if(!document.body) return;
-    var d=document.createElement('div'); d.id='pw-gate';
-    d.innerHTML='<div class="pw-card"><img class="pw-mark" src="/apple-icon.png" alt=""/><h1 class="pw-title">拉格朗日®</h1><p class="pw-sub">输入访问密码，进入工具箱</p><input id="pw-in" type="password" inputmode="numeric" autocomplete="off" placeholder="访问密码"/><button class="pw-btn" id="pw-btn" type="button">进入</button><p class="pw-terms"><a href="/terms.html" target="_blank" rel="noopener">《使用条款与免责声明》</a> · 禁止爬虫抓取与收录</p><p id="pw-err">密码不对，再试试</p></div>';
+    var d=document.createElement('div'); d.id='pw-gate';    d.innerHTML='<div class="pw-card"><img class="pw-mark" src="/apple-icon.png" alt=""/><h1 class="pw-title">拉格朗日®</h1><p class="pw-sub">输入访问密码，进入工具箱</p><input id="pw-in" type="password" inputmode="numeric" autocomplete="off" placeholder="访问密码"/><button class="pw-btn" id="pw-btn" type="button">进入</button><p class="pw-terms"><a href="/terms.html" target="_blank" rel="noopener">《使用条款与免责声明》</a> · 禁止爬虫抓取与收录</p><p id="pw-err">密码不对，再试试</p></div>';
     document.body.appendChild(d);
     var b=document.getElementById('pw-btn'),i=document.getElementById('pw-in');
     b.addEventListener('click',check);
     i.addEventListener('keydown',function(e){ if(e.key==='Enter') check(); });
     setTimeout(function(){ i.focus(); },80);
   },80); });
+})();
+</script>
+<script id="site-extra-js">
+(function(){
+  window.addEventListener('load',function(){ setTimeout(function(){
+    try{
+      if(document.querySelector('a.acard[data-extra]'))return;
+      var seed=document.querySelector('a.acard');
+      if(!seed)return;
+      var box0=seed.closest('.card-hitbox');
+      if(!box0||!box0.parentNode)return;
+      var container=box0.parentNode;
+      fetch('/articles/list.json').then(function(r){return r.json()}).then(function(list){
+        (list||[]).slice(0,6).forEach(function(it){
+          var box=box0.cloneNode(true);
+          var a=box.querySelector('a.acard');
+          if(!a)return;
+          a.setAttribute('data-extra','1');
+          a.setAttribute('href','/articles/view.html?slug='+encodeURIComponent(it.slug||''));
+          var img=a.querySelector('img');
+          if(img){ if(it.cover)img.setAttribute('src',it.cover); img.setAttribute('alt',it.title||''); }
+          var d=a.querySelector('.acard-date'); if(d)d.textContent=(it.date||'').replace(/-/g,'.');
+          var t=a.querySelector('.acard-title'); if(t)t.textContent=it.title||'';
+          var e=a.querySelector('.acard-excerpt'); if(e)e.textContent=it.summary||'';
+          box.style.opacity='1'; box.style.transform='none';
+          if(a.style){a.style.opacity='1'; a.style.transform='none';}
+          container.appendChild(box);
+        });
+      }).catch(function(){});
+    }catch(e){}
+  },1000); });
 })();
 </script>
 </head>

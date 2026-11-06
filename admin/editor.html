@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet"/>
+<title>Markdown 编辑器 · 拉格朗日</title>
+<link rel="stylesheet" href="/articles/article.css"/>
+<style>
+body{padding:0;overflow:hidden}
+.top{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--line);background:#fff}
+.top .logo{width:30px;height:30px;object-fit:contain;filter:drop-shadow(3px 3px #ffe28ab8)}
+.top h1{font-size:16px;margin:0;letter-spacing:.02em}
+.top .sp{flex:1}
+.btn{font-family:inherit;font-size:13px;padding:8px 16px;border:1px solid var(--ink);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer}
+.btn:hover{background:#fafafa}
+.btn.primary{background:var(--hl)}
+.btn.primary:hover{background:#ffd75e}
+.btn:disabled{opacity:.45;cursor:default}
+.meta-row{display:flex;flex-wrap:wrap;gap:10px;padding:12px 22px;border-bottom:1px solid var(--line);background:#fdfdfd}
+.meta-row input{font-family:inherit;font-size:13px;padding:7px 11px;border:1px solid var(--line);border-radius:9px;outline:none;background:#fff;color:var(--ink)}
+.meta-row input:focus{border-color:var(--ink)}
+.meta-row input.w-title{flex:2;min-width:200px}
+.meta-row input.w-slug{flex:1;min-width:130px}
+.meta-row input.w-date{width:130px}
+.meta-row input.w-tags{flex:1;min-width:150px}
+.meta-row input.w-sum{flex:2;min-width:220px}
+.toolbar{display:flex;flex-wrap:wrap;gap:6px;padding:9px 22px;border-bottom:1px solid var(--line);background:#fff}
+.tb{font-size:12px;padding:5px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;color:var(--t2)}
+.tb:hover{border-color:var(--ink);color:var(--ink)}
+.split{display:flex;height:calc(100vh - 208px)}
+#editor{flex:1;border:none;outline:none;resize:none;padding:22px 26px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;line-height:1.85;color:var(--ink);background:#fff;border-right:1px solid var(--line)}
+.preview{flex:1;overflow:auto;padding:10px 30px 40px;background:#fff}
+.preview .art-body{font-size:14.5px}
+.pub-bar{display:flex;align-items:center;gap:10px;padding:10px 22px;border-top:1px solid var(--line);background:#fdfdfd}
+.pub-bar input[type=password]{flex:1;max-width:320px;font-family:inherit;font-size:12.5px;padding:7px 11px;border:1px solid var(--line);border-radius:9px;outline:none}
+.pub-bar input[type=password]:focus{border-color:var(--ink)}
+.status{font-size:12px;color:var(--t3);flex:1;min-width:120px}
+.status b{color:var(--ink)}
+.hint{font-size:11px;color:var(--t3);padding:0 22px 10px;background:#fdfdfd}
+@media(max-width:860px){.split{flex-direction:column;height:auto}#editor{height:40vh;border-right:none;border-bottom:1px solid var(--line)}.preview{height:40vh}}
+</style>
+<style id="pw-hide-style">body{visibility:hidden}</style>
+<style id="pw-gate-style">
+#pw-gate{position:fixed;inset:0;z-index:2147483647;visibility:visible;background-color:#fff;background-image:linear-gradient(#00000006 1px,transparent 0),linear-gradient(90deg,#00000006 1px,transparent 0);background-size:32px 32px;display:flex;align-items:center;justify-content:center;font-family:"Helvetica Neue",-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans",Arial,sans-serif}
+#pw-gate .pw-card{width:min(330px,86vw);box-sizing:border-box;background:#fff;border:1px solid #1a1a1a;border-radius:16px;padding:30px 26px 26px;text-align:center}
+#pw-gate .pw-mark{width:76px;height:76px;object-fit:contain;filter:drop-shadow(5px 6px #ffe28ab8);display:block;margin:0 auto 14px;user-select:none}
+#pw-gate .pw-title{font-size:19px;font-weight:800;letter-spacing:.02em;color:#1a1a1a;margin:0 0 6px}
+#pw-gate .pw-sub{font-size:13px;color:#555;margin:0 0 18px}
+#pw-gate #pw-in{width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid #e8e8e8;border-radius:10px;font-size:15px;outline:none;background:#fff;color:#1a1a1a}
+#pw-gate #pw-in:focus{border-color:#1a1a1a}
+#pw-gate .pw-btn{margin-top:11px;width:100%;padding:11px;border-radius:10px;border:1px solid #1a1a1a;background:#ffe28a;color:#1a1a1a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+#pw-gate .pw-btn:hover{background:#ffd75e}
+#pw-gate .pw-terms{margin:13px 0 0;font-size:11.5px;color:#999;line-height:1.7}
+#pw-gate .pw-terms a{color:#555;text-decoration:underline}
+#pw-gate #pw-err{color:#c0392b;font-size:12.5px;margin:10px 0 0;visibility:hidden}
+#pw-gate.shake .pw-card{animation:pw-shake .4s}
+@keyframes pw-shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
+</style>
+<script id="pw-gate-js">
+(function(){
+  var K='lgr_access_v1',H='ce6e5f08bbc81867000373e222ea71ff022385436bee9cb427502c118574c1b2';
+  function reveal(){
+    var s=document.getElementById('pw-hide-style');
+    if(s&&s.parentNode){ s.disabled=true; if(s.parentNode) s.parentNode.removeChild(s); }
+    if(document.body) document.body.style.visibility='visible';
+  }
+  function unlock(){ try{localStorage.setItem(K,'1')}catch(e){} location.reload(); }
+  function fail(){ var g=document.getElementById('pw-gate'); if(!g)return; g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake'); var e=document.getElementById('pw-err'); if(e)e.style.visibility='visible'; }
+  function check(){
+    var i=document.getElementById('pw-in'),v=i?i.value:'';
+    if(window.crypto&&crypto.subtle&&crypto.subtle.digest&&window.TextEncoder){
+      crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)).then(function(buf){
+        var h=[].map.call(new Uint8Array(buf),function(b){return('0'+b.toString(16)).slice(-2)}).join('');
+        if(h===H)unlock();else fail();
+      },fail);
+    }else{ if(v===atob('MjEzMzUx'))unlock();else fail(); }
+  }
+  var passed=false; try{passed=localStorage.getItem(K)==='1'}catch(e){}
+  if(passed){ reveal(); return; }
+  window.addEventListener('load',function(){ setTimeout(function(){
+    if(!document.body) return;
+    var d=document.createElement('div'); d.id='pw-gate';    d.innerHTML='<div class="pw-card"><img class="pw-mark" src="/apple-icon.png" alt=""/><h1 class="pw-title">拉格朗日®</h1><p class="pw-sub">输入访问密码，进入工具箱</p><input id="pw-in" type="password" inputmode="numeric" autocomplete="off" placeholder="访问密码"/><button class="pw-btn" id="pw-btn" type="button">进入</button><p class="pw-terms"><a href="/terms.html" target="_blank" rel="noopener">《使用条款与免责声明》</a> · 禁止爬虫抓取与收录</p><p id="pw-err">密码不对，再试试</p></div>';
+    document.body.appendChild(d);
+    var b=document.getElementById('pw-btn'),i=document.getElementById('pw-in');
+    b.addEventListener('click',check);
+    i.addEventListener('keydown',function(e){ if(e.key==='Enter') check(); });
+    setTimeout(function(){ i.focus(); },80);
+  },80); });
+})();
+</script>
+<script id="site-extra-js">
+(function(){
+  window.addEventListener('load',function(){ setTimeout(function(){
+    try{
+      if(document.querySelector('a.acard[data-extra]'))return;
+      var seed=document.querySelector('a.acard');
+      if(!seed)return;
+      var box0=seed.closest('.card-hitbox');
+      if(!box0||!box0.parentNode)return;
+      var container=box0.parentNode;
+      fetch('/articles/list.json').then(function(r){return r.json()}).then(function(list){
+        (list||[]).slice(0,6).forEach(function(it){
+          var box=box0.cloneNode(true);
+          var a=box.querySelector('a.acard');
+          if(!a)return;
+          a.setAttribute('data-extra','1');
+          a.setAttribute('href','/articles/view.html?slug='+encodeURIComponent(it.slug||''));
+          var img=a.querySelector('img');
+          if(img){ if(it.cover)img.setAttribute('src',it.cover); img.setAttribute('alt',it.title||''); }
+          var d=a.querySelector('.acard-date'); if(d)d.textContent=(it.date||'').replace(/-/g,'.');
+          var t=a.querySelector('.acard-title'); if(t)t.textContent=it.title||'';
+          var e=a.querySelector('.acard-excerpt'); if(e)e.textContent=it.summary||'';
+          box.style.opacity='1'; box.style.transform='none';
+          if(a.style){a.style.opacity='1'; a.style.transform='none';}
+          container.appendChild(box);
+        });
+      }).catch(function(){});
+    }catch(e){}
+  },1000); });
+})();
+</script>
+</head>
+<body>
+<div class="top">
+<img class="logo" src="/apple-icon.png" alt=""/>
+<h1>拉格朗日 · Markdown 编辑器</h1>
+<div class="sp"></div>
+<button class="btn" id="btn-copy">复制 Markdown</button>
+<button class="btn" id="btn-dl">下载 .md</button>
+<button class="btn primary" id="btn-pub">发布到 GitHub</button>
+</div>
+
+<div class="meta-row">
+<input class="w-title" id="f-title" placeholder="文章标题"/>
+<input class="w-slug" id="f-slug" placeholder="slug（英文短横线）"/>
+<input class="w-date" id="f-date" placeholder="日期 2026-11-06"/>
+<input class="w-tags" id="f-tags" placeholder="标签（逗号分隔）"/>
+<input class="w-sum" id="f-sum" placeholder="摘要（一句话）"/>
+</div>
+
+<div class="toolbar">
+<button class="tb" data-w="h2">H2</button>
+<button class="tb" data-w="h3">H3</button>
+<button class="tb" data-w="bold">加粗</button>
+<button class="tb" data-w="italic">斜体</button>
+<button class="tb" data-w="ul">列表</button>
+<button class="tb" data-w="quote">引用</button>
+<button class="tb" data-w="code">代码块</button>
+<button class="tb" data-w="link">链接</button>
+<button class="tb" data-w="table">表格</button>
+<button class="tb" data-w="hr">分割线</button>
+<div class="sp"></div>
+<span class="status" id="draft-state">草稿自动保存于本机</span>
+</div>
+
+<div class="split">
+<textarea id="editor" placeholder="在这里写 Markdown……&#10;&#10;## 小标题&#10;正文支持 **加粗**、列表、引用、代码块、表格。&#10;&#10;- 列表项&#10;- 列表项&#10;"></textarea>
+<div class="preview"><div class="art-body" id="preview"></div></div>
+</div>
+
+<div class="pub-bar">
+<input type="password" id="f-pat" placeholder="GitHub 令牌（PAT，只存本机浏览器）"/>
+<button class="btn" id="btn-pat">保存令牌</button>
+<span class="status" id="pub-state">发布流程：写好 → 点「发布到 GitHub」→ 约 1 分钟后生效</span>
+</div>
+<p class="hint">提示：不想配令牌也可以点「复制 Markdown」发给管理员代发。令牌仅存于本机 localStorage，不会上传；建议使用仅含 repo 权限的细粒度令牌。</p>
+
+<script src="/articles/marked.min.js"></script>
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var DRAFT = 'lgr_editor_draft', PATK = 'lgr_gh_pat';
+
+  function today(){ var d = new Date(); var p = function(n){ return (n<10?'0':'') + n; }; return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()); }
+  function slugify(s){ return (s||'').trim().toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60) || ('post-' + Date.now()); }
+  function collect(){
+    return {
+      title: $('f-title').value.trim() || '未命名',
+      slug: $('f-slug').value.trim() || slugify($('f-title').value),
+      date: $('f-date').value.trim() || today(),
+      tags: $('f-tags').value.trim(),
+      summary: $('f-sum').value.trim(),
+      body: $('editor').value
+    };
+  }
+  function compose(d){
+    return '---\n' + 'title: ' + d.title + '\n' + 'slug: ' + d.slug + '\n' + 'date: ' + d.date + '\n' +
+      (d.tags ? 'tags: ' + d.tags + '\n' : '') + (d.summary ? 'summary: ' + d.summary + '\n' : '') + '---\n\n' + d.body + '\n';
+  }
+  function render(){
+    try{ $('preview').innerHTML = marked.parse($('editor').value); }catch(e){}
+    $('draft-state').innerHTML = '✓ 已存草稿 · ' + new Date().toLocaleTimeString();
+    saveDraft();
+  }
+  function saveDraft(){ try{ localStorage.setItem(DRAFT, JSON.stringify(collect())); }catch(e){} }
+  function loadDraft(){
+    try{
+      var d = JSON.parse(localStorage.getItem(DRAFT) || 'null');
+      if(d){ $('f-title').value = d.title || ''; $('f-slug').value = d.slug || ''; $('f-date').value = d.date || ''; $('f-tags').value = d.tags || ''; $('f-sum').value = d.summary || ''; $('editor').value = d.body || ''; }
+      else { $('f-date').value = today(); }
+    }catch(e){ $('f-date').value = today(); }
+  }
+
+  // 工具栏：选区包裹
+  var wraps = {
+    h2: ['## ', ''], h3: ['### ', ''], bold: ['**', '**'], italic: ['*', '*'],
+    ul: ['- ', ''], quote: ['> ', ''], code: ['```\n', '\n```'], link: ['[', '](https://)'],
+    table: ['\n| 列一 | 列二 |\n|---|---|\n| 值 | 值 |\n', ''], hr: ['\n---\n', '']
+  };
+  document.querySelectorAll('.tb').forEach(function(b){
+    b.addEventListener('click', function(){
+      var ta = $('editor'), w = wraps[b.getAttribute('data-w')] || ['',''];
+      var s = ta.selectionStart, e = ta.selectionEnd, sel = ta.value.slice(s, e);
+      ta.value = ta.value.slice(0, s) + w[0] + sel + w[1] + ta.value.slice(e);
+      ta.focus(); ta.selectionStart = s + w[0].length; ta.selectionEnd = s + w[0].length + sel.length;
+      render();
+    });
+  });
+
+  $('editor').addEventListener('input', render);
+  ['f-title','f-slug','f-date','f-tags','f-sum'].forEach(function(id){ $(id).addEventListener('input', saveDraft); });
+  $('f-title').addEventListener('blur', function(){ if(!$('f-slug').value.trim()) $('f-slug').value = slugify($('f-title').value); });
+
+  $('btn-copy').addEventListener('click', function(){
+    navigator.clipboard.writeText(compose(collect()));
+    $('draft-state').innerHTML = '<b>已复制 Markdown</b> · 粘贴给管理员即可代发';
+  });
+  $('btn-dl').addEventListener('click', function(){
+    var d = collect();
+    var blob = new Blob([compose(d)], { type: 'text/markdown' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = d.slug + '.md'; a.click();
+  });
+
+  // GitHub 直发
+  $('f-pat').value = localStorage.getItem(PATK) || '';
+  $('btn-pat').addEventListener('click', function(){
+    localStorage.setItem(PATK, $('f-pat').value.trim());
+    $('pub-state').innerHTML = '<b>令牌已存本机</b>';
+  });
+
+  function b64(str){
+    var bytes = new TextEncoder().encode(str), bin = '';
+    bytes.forEach(function(b){ bin += String.fromCharCode(b); });
+    return btoa(bin);
+  }
+  function gh(path, method, payload, token){
+    return fetch('https://api.github.com/repos/syydds18/syydds18.github.io/contents/' + path, {
+      method: method,
+      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' },
+      body: payload ? JSON.stringify(payload) : undefined
+    });
+  }
+  $('btn-pub').addEventListener('click', function(){
+    var token = ($('f-pat').value || '').trim();
+    if(!token){ $('pub-state').innerHTML = '<b>先填 GitHub 令牌</b>（或改用复制 Markdown 代发）'; return; }
+    var d = collect();
+    $('btn-pub').disabled = true;
+    $('pub-state').innerHTML = '发布中…';
+    var mdPath = 'articles/data/' + d.slug + '.md';
+    gh(mdPath, 'GET', null, token).then(function(r){ return r.ok ? r.json() : null; }).then(function(existing){
+      return gh(mdPath, 'PUT', { message: '文章发布: ' + d.title, content: b64(compose(d)), sha: existing ? existing.sha : undefined }, token);
+    }).then(function(r){
+      if(!r.ok) return r.json().then(function(j){ throw new Error(j.message || ('HTTP ' + r.status)); });
+      return gh('articles/list.json', 'GET', null, token);
+    }).then(function(r){ return r.json(); }).then(function(cur){
+      var list = JSON.parse(atob(cur.content.replace(/\s/g, '')));
+      list = list.filter(function(x){ return x.slug !== d.slug; });
+      list.unshift({ slug: d.slug, title: d.title, date: d.date, summary: d.summary, tags: d.tags ? d.tags.split(/[，,]/).map(function(t){return t.trim();}) : [] });
+      list.sort(function(a, b){ return (b.date || '').localeCompare(a.date || ''); });
+      return gh('articles/list.json', 'PUT', { message: '更新文章列表: ' + d.title, content: b64(JSON.stringify(list, null, 2)), sha: cur.sha }, token);
+    }).then(function(r){
+      if(!r.ok) return r.json().then(function(j){ throw new Error(j.message || ('HTTP ' + r.status)); });
+      $('pub-state').innerHTML = '<b>✓ 已发布</b> · GitHub Pages 约 1 分钟后生效 → ' +
+        '<a href="/articles/view.html?slug=' + d.slug + '" target="_blank">预览</a>';
+    }).catch(function(e){
+      $('pub-state').innerHTML = '<b>发布失败</b>：' + e.message;
+    }).then(function(){ $('btn-pub').disabled = false; });
+  });
+
+  loadDraft();
+  render();
+})();
+</script>
+</body>
+</html>
