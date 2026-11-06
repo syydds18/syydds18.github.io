@@ -149,6 +149,7 @@
       }).join('');
     }
     document.getElementById('art-body').innerHTML = marked.parse(fm.body);
+    try{ fetch('https://1302897331-05i96qmvj3.ap-guangzhou.tencentscf.com/api/view', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: slug }) }); }catch(e){}
   }).catch(function(){
     document.getElementById('art-title').textContent = '文章不存在';
   });

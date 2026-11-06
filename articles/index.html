@@ -133,6 +133,17 @@ fetch('/articles/list.json').then(function(r){return r.json()}).then(function(li
       '<div class="t">' + it.title + '</div>' +
       '<p class="s">' + (it.summary||'') + '</p></a>';
   }).join('');
+  try{
+    fetch('https://1302897331-05i96qmvj3.ap-guangzhou.tencentscf.com/api/counts').then(function(r){ return r.json(); }).then(function(c){
+      [].forEach.call(box.querySelectorAll('.art-card'), function(a){
+        var m = (a.getAttribute('href') || '').match(/slug=([^&]+)/);
+        if(m && c[decodeURIComponent(m[1])]){
+          var d = a.querySelector('.d');
+          if(d){ d.textContent += ' · ' + c[decodeURIComponent(m[1])] + ' 阅'; }
+        }
+      });
+    }).catch(function(){});
+  }catch(e){}
 }).catch(function(){ document.getElementById('list').innerHTML = '<p class="empty">加载失败，请刷新。</p>'; });
 </script>
 </body>

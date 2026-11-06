@@ -202,11 +202,10 @@ body{padding:0;overflow:hidden}
 </div>
 
 <div class="pub-bar">
-<input type="password" id="f-pat" placeholder="发布令牌（一次性粘贴，只存本机浏览器）"/>
-<button class="btn" id="btn-pat">保存令牌</button>
+<span class="status" id="server-state">服务器：未连接</span>
 <span class="status" id="pub-state">写好 → 点「发布上线」→ 约 1 分钟后网站生效</span>
 </div>
-<p class="hint">提示：「发布上线」会把文章直接写进网站的内容仓库（网站即刻更新，约 1 分钟生效）。发布令牌只需粘贴一次、仅存本机浏览器；不想配令牌就点「复制 Markdown」发给管理员代发。</p>
+<p class="hint">提示：「发布上线」通过站点服务器直接发布（文章入库并即刻更新网站，约 1 分钟生效）；不想点发布也可以「复制 Markdown」发给管理员代发。</p>
 
 <script src="/articles/marked.min.js"></script>
 <script>
@@ -224,7 +223,7 @@ body{padding:0;overflow:hidden}
   function lockCheck(){
     var v = $('lock-pass').value || '';
     var done = function(h){
-      if(h === H_ADMIN){ localStorage.setItem(AK, '1'); $('admin-lock').style.display = 'none'; }
+      if(h === H_ADMIN){ localStorage.setItem(AK, '1'); $('admin-lock').style.display = 'none'; apiLogin(v); }
       else lockFail();
     };
     if(window.crypto && crypto.subtle && crypto.subtle.digest && window.TextEncoder){
@@ -233,7 +232,7 @@ body{padding:0;overflow:hidden}
       }, lockFail);
     }else{ done(v === atob('MjEzMzUxMTAwNw==') ? H_ADMIN : ''); }
   }
-  if(!adminOn()){ $('admin-lock').style.display = 'flex'; }
+  if(!adminOn() || !localStorage.getItem('lgr_api_token')){ $('admin-lock').style.display = 'flex'; }
   $('lock-btn').addEventListener('click', lockCheck);
   $('lock-pass').addEventListener('keydown', function(e){ if(e.key === 'Enter') lockCheck(); });
 
@@ -327,50 +326,36 @@ body{padding:0;overflow:hidden}
     a.href = URL.createObjectURL(blob); a.download = d.slug + '.md'; a.click();
   });
 
-  // GitHub 直发
-  $('f-pat').value = localStorage.getItem(PATK) || '';
-  $('btn-pat').addEventListener('click', function(){
-    localStorage.setItem(PATK, $('f-pat').value.trim());
-    $('pub-state').innerHTML = '<b>令牌已存本机</b>';
-  });
+  // 站点服务器直发（后端 API：登录 -> 发文入库 -> 服务器同步上站）
+  var LGR_API = 'https://1302897331-05i96qmvj3.ap-guangzhou.tencentscf.com';
+  var ATK = 'lgr_api_token';
+  function apiLogin(pw){
+    return fetch(LGR_API + '/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }) }).then(function(r){ return r.json(); }).then(function(j){
+      if(j && j.token){ localStorage.setItem(ATK, j.token); $('server-state').innerHTML = '服务器：<b>已连接</b>'; return true; }
+      $('server-state').innerHTML = '服务器：登录失败'; return false;
+    }).catch(function(){ $('server-state').innerHTML = '服务器：未连接（网络？）'; return false; });
+  }
+  if(localStorage.getItem(ATK)){ $('server-state').innerHTML = '服务器：<b>已连接</b>'; }
+  else if(adminOn()){ $('server-state').innerHTML = '服务器：未登录（重输开发者密码即可连接）'; }
 
-  function b64(str){
-    var bytes = new TextEncoder().encode(str), bin = '';
-    bytes.forEach(function(b){ bin += String.fromCharCode(b); });
-    return btoa(bin);
-  }
-  function gh(path, method, payload, token){
-    return fetch('https://api.github.com/repos/syydds18/syydds18.github.io/contents/' + path, {
-      method: method,
-      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' },
-      body: payload ? JSON.stringify(payload) : undefined
-    });
-  }
   $('btn-pub').addEventListener('click', function(){
-    var token = ($('f-pat').value || '').trim();
-    if(!token){ $('pub-state').innerHTML = '<b>先粘贴一次发布令牌</b>（只存本机；或改用复制 Markdown 代发）'; return; }
+    var token = localStorage.getItem(ATK) || '';
+    if(!token){ $('pub-state').innerHTML = '<b>先连服务器</b>：重输一次开发者密码即可登录；或改用复制 Markdown 代发'; return; }
     var d = collect();
     $('btn-pub').disabled = true;
     $('pub-state').innerHTML = '发布中…';
-    var mdPath = 'articles/data/' + d.slug + '.md';
-    gh(mdPath, 'GET', null, token).then(function(r){ return r.ok ? r.json() : null; }).then(function(existing){
-      return gh(mdPath, 'PUT', { message: '文章发布: ' + d.title, content: b64(compose(d)), sha: existing ? existing.sha : undefined }, token);
-    }).then(function(r){
-      if(!r.ok) return r.json().then(function(j){ throw new Error(j.message || ('HTTP ' + r.status)); });
-      return gh('articles/list.json', 'GET', null, token);
-    }).then(function(r){ return r.json(); }).then(function(cur){
-      var list = JSON.parse(atob(cur.content.replace(/\s/g, '')));
-      list = list.filter(function(x){ return x.slug !== d.slug; });
-      list.unshift({ slug: d.slug, title: d.title, date: d.date, summary: d.summary, tags: d.tags ? d.tags.split(/[，,]/).map(function(t){return t.trim();}) : [] });
-      list.sort(function(a, b){ return (b.date || '').localeCompare(a.date || ''); });
-      return gh('articles/list.json', 'PUT', { message: '更新文章列表: ' + d.title, content: b64(JSON.stringify(list, null, 2)), sha: cur.sha }, token);
-    }).then(function(r){
-      if(!r.ok) return r.json().then(function(j){ throw new Error(j.message || ('HTTP ' + r.status)); });
-      $('pub-state').innerHTML = '<b>✓ 已发布上线</b> · 约 1 分钟后生效 → ' +
-        '<a href="/articles/view.html?slug=' + d.slug + '" target="_blank">查看线上文章</a>';
-    }).catch(function(e){
-      $('pub-state').innerHTML = '<b>发布失败</b>：' + e.message;
-    }).then(function(){ $('btn-pub').disabled = false; });
+    fetch(LGR_API + '/api/articles/' + encodeURIComponent(d.slug), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ title: d.title, date: d.date, tags: d.tags, summary: d.summary, body: d.body })
+    }).then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; }); })
+      .then(function(j){
+        $('pub-state').innerHTML = '<b>✓ 已发布上线</b>' + (j.synced ? ' · 约 1 分钟后生效' : ' · 已入库，同步稍后重试') +
+          ' → <a href="' + (j.url || ('/articles/view.html?slug=' + d.slug)) + '" target="_blank">查看线上文章</a>';
+      }).catch(function(e){
+        $('pub-state').innerHTML = '<b>发布失败</b>：' + e.message;
+      }).then(function(){ $('btn-pub').disabled = false; });
   });
 
   loadDraft();
