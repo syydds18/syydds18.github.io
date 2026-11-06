@@ -258,6 +258,15 @@ a{color:inherit}
         <div class="field" style="flex:0 0 auto"><label>&nbsp;</label><button class="btn" id="h-go">更新运限</button></div>
       </div>
     </section>
+
+    <section class="panel" id="ai-panel" style="margin-top:22px" hidden>
+      <div class="row-inline">
+        <div class="field" style="flex:1"><label>AI 命理详批 · 开发者专属</label>
+          <button class="btn btn-accent" id="ai-go">生成命理详批</button>
+        </div>
+      </div>
+      <div id="ai-out" style="margin-top:14px;white-space:pre-wrap;font-size:14px;line-height:1.95"></div>
+    </section>
   </div>
 </main>
 
@@ -285,6 +294,8 @@ var BLURB = {
 };
 var MUT_CLS = ['mut-0','mut-1','mut-2','mut-3'];
 var ast = null;
+var lastH = null;
+var API = 'https://1302897331-05i96qmvj3.ap-guangzhou.tencentscf.com';
 
 (function(){
   var s = document.getElementById('s-time');
@@ -339,6 +350,9 @@ function build(){
   document.getElementById('result').hidden = false;
   renderChart();
   renderHoroscope();
+  try {
+    document.getElementById('ai-panel').hidden = !(localStorage.getItem('lgr_admin_v1') === '1');
+  } catch (e) {}
 }
 
 function starChip(st, flowMut) {
@@ -400,6 +414,7 @@ function renderChart() {
 function renderHoroscope() {
   if (!ast) return;
   var h = ast.horoscope(document.getElementById('h-date').value || undefined);
+  lastH = h;
   var flowMut = {};
   (h.yearly.mutagen || []).forEach(function(name, i){ flowMut[name] = i; });
 
@@ -442,6 +457,61 @@ function findCell(branch) {
   });
   return found;
 }
+
+function buildPayload(){
+  var h = lastH || ast.horoscope(document.getElementById('h-date').value || undefined);
+  var flowStars = {};
+  (h.yearly.palaceNames || []).forEach(function(name, i){
+    flowStars[name] = ((h.yearly.stars && h.yearly.stars[i]) || []).map(function(s){ return s.name; });
+  });
+  return {
+    info: {gender: ast.gender, solarDate: ast.solarDate, lunarDate: ast.lunarDate, time: ast.time,
+      timeRange: ast.timeRange, chineseDate: ast.chineseDate, zodiac: ast.zodiac, sign: ast.sign,
+      soul: ast.soul, body: ast.body, fiveElementsClass: ast.fiveElementsClass},
+    palaces: ast.palaces.map(function(p){ return {
+      name: p.name, heavenlyStem: p.heavenlyStem, earthlyBranch: p.earthlyBranch,
+      isBodyPalace: !!p.isBodyPalace,
+      major: p.majorStars.map(function(s){ return {name: s.name, brightness: s.brightness || '', mutagen: s.mutagen || ''}; }),
+      minor: p.minorStars.map(function(s){ return {name: s.name, brightness: s.brightness || ''}; }),
+      adj: p.adjectiveStars.map(function(s){ return {name: s.name}; }),
+      decadal: (p.decadal && p.decadal.range) || null,
+      decadalStem: (p.decadal && p.decadal.heavenlyStem) || '',
+      decadalBranch: (p.decadal && p.decadal.earthlyBranch) || '' }; }),
+    flow: {yearStem: h.yearly.heavenlyStem, yearBranch: h.yearly.earthlyBranch,
+      yearMutagen: h.yearly.mutagen || [], decadalStem: h.decadal.heavenlyStem,
+      decadalBranch: h.decadal.earthlyBranch, stars: flowStars}
+  };
+}
+function ensureToken(){
+  var t = null;
+  try { t = localStorage.getItem('lgr_api_token'); } catch (e) {}
+  if (t) return Promise.resolve(t);
+  var pw = prompt('输入开发者密码以使用 AI 详批');
+  if (!pw) return Promise.reject(new Error('已取消'));
+  return fetch(API + '/api/login', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({password: pw})}).then(function(r){ return r.json(); }).then(function(d){
+    if (!d.token) throw new Error(d.error || '登录失败');
+    try { localStorage.setItem('lgr_api_token', d.token); } catch (e) {}
+    return d.token;
+  });
+}
+function runAI(){
+  var out = document.getElementById('ai-out');
+  var btn = document.getElementById('ai-go');
+  btn.disabled = true;
+  out.textContent = '正在推演命盘，约需 1 分钟，请勿关闭页面……';
+  ensureToken().then(function(tok){
+    return fetch(API + '/api/interpret', {method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok},
+      body: JSON.stringify({chart: buildPayload(), date: document.getElementById('h-date').value})});
+  }).then(function(r){ return r.json().then(function(d){ return {s: r.status, d: d}; }); }).then(function(x){
+    if (x.s === 401) { try { localStorage.removeItem('lgr_api_token'); } catch (e) {} throw new Error('登录已过期，请再点一次并重新输入开发者密码'); }
+    if (!x.d || !x.d.text) throw new Error((x.d && x.d.error) || ('请求失败 ' + x.s));
+    out.textContent = x.d.text;
+  }).catch(function(e){ out.textContent = '生成失败：' + (e && e.message || e); })
+    .then(function(){ btn.disabled = false; });
+}
+document.getElementById('ai-go').addEventListener('click', runAI);
 
 function cycleTheme(){
   var el=document.documentElement;
